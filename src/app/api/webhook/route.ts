@@ -27,24 +27,27 @@ export async function POST(request: NextRequest) {
   } catch (e: unknown) {
     const error = e as ParseWebhookEvent.ErrorType;
 
+    // Safely extract error message
+    const errorMessage = error?.message || 'Unknown error occurred';
+
     switch (error.name) {
       case "VerifyJsonFarcasterSignature.InvalidDataError":
       case "VerifyJsonFarcasterSignature.InvalidEventDataError":
         // The request data is invalid
         return Response.json(
-          { success: false, error: error.message },
+          { success: false, error: errorMessage },
           { status: 400 }
         );
       case "VerifyJsonFarcasterSignature.InvalidAppKeyError":
         // The app key is invalid
         return Response.json(
-          { success: false, error: error.message },
+          { success: false, error: errorMessage },
           { status: 401 }
         );
       case "VerifyJsonFarcasterSignature.VerifyAppKeyError":
         // Internal error verifying the app key (caller may want to try again)
         return Response.json(
-          { success: false, error: error.message },
+          { success: false, error: errorMessage },
           { status: 500 }
         );
     }

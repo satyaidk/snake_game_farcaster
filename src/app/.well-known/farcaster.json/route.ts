@@ -7,6 +7,17 @@ export async function GET() {
     return NextResponse.json(config);
   } catch (error) {
     console.error('Error generating metadata:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    
+    // Handle different error types safely
+    let errorMessage = 'Unknown error occurred';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error && typeof error === 'object' && 'message' in error) {
+      errorMessage = String(error.message);
+    }
+    
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

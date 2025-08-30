@@ -785,8 +785,9 @@ async function deployToVercel(useGitHub = false): Promise<void> {
         }
       });
 
-      vercelDeploy.on('error', error => {
-        console.error('❌ Vercel deployment error:', error.message);
+      vercelDeploy.on('error', (error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        console.error('❌ Vercel deployment error:', errorMessage);
         reject(error);
       });
     });
@@ -864,8 +865,9 @@ async function deployToVercel(useGitHub = false): Promise<void> {
           }
         });
 
-        vercelRedeploy.on('error', error => {
-          console.error('❌ Redeployment error:', error.message);
+        vercelRedeploy.on('error', (error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+          console.error('❌ Redeployment error:', errorMessage);
           reject(error);
         });
       });

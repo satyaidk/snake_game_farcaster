@@ -30,7 +30,10 @@ export function useNeynarUser(context?: { user?: { fid?: number } }) {
           setUser(null);
         }
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        setError(errorMessage);
+      })
       .finally(() => setLoading(false));
   }, [context?.user?.fid]);
 

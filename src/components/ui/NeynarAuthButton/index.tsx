@@ -107,7 +107,7 @@ export function NeynarAuthButton() {
   const [signerApprovalUrl, setSignerApprovalUrl] = useState<string | null>(
     null
   );
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(
+  const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(
     null
   );
   const [message, setMessage] = useState<string | null>(null);
@@ -215,11 +215,10 @@ export function NeynarAuthButton() {
         }
 
         const data = await response.json();
-
         return data;
       } catch (error) {
         console.error('❌ Error generating signed key request:', error);
-        // throw error;
+        throw error; // Re-throw the error so it can be handled by the caller
       }
     },
     []
@@ -276,11 +275,11 @@ export function NeynarAuthButton() {
           }
         } else {
           console.error('❌ Failed to fetch signers');
-          // throw new Error('Failed to fetch signers');
+          throw new Error('Failed to fetch signers');
         }
       } catch (error) {
         console.error('❌ Error fetching signers:', error);
-        // throw error;
+        throw error;
       } finally {
         setSignersLoading(false);
       }
@@ -491,12 +490,18 @@ export function NeynarAuthButton() {
           if (!signers || signers.length === 0) {
             // Step 1: Create a signer
             const newSigner = await createSigner();
+            if (!newSigner) {
+              throw new Error('Failed to create signer');
+            }
 
             // Step 2: Generate signed key request
             const signedKeyData = await generateSignedKeyRequest(
               newSigner.signer_uuid,
               newSigner.public_key
             );
+            if (!signedKeyData) {
+              throw new Error('Failed to generate signed key request');
+            }
 
             // Step 3: Show QR code in access dialog for signer approval
             setSignerApprovalUrl(signedKeyData.signer_approval_url);
@@ -536,7 +541,17 @@ export function NeynarAuthButton() {
 
       handleSignerFlow();
     }
-  }, [message, signature]); // Simplified dependencies
+  }, [
+    message, 
+    signature, 
+    isSignerFlowRunning, 
+    context?.client, 
+    createSigner, 
+    fetchAllSigners, 
+    generateSignedKeyRequest, 
+    startPolling, 
+    useBackendFlow
+  ]); // Added missing dependencies
 
   // Backend flow using NextAuth
   const handleBackendSignIn = useCallback(async () => {
@@ -665,6 +680,7 @@ export function NeynarAuthButton() {
       ) : (
         <Button
           onClick={useBackendFlow ? handleBackendSignIn : handleFrontEndSignIn}
+          isLoading={!useBackendFlow && !url}
           disabled={!useBackendFlow && !url}
           className={cn(
             'btn btn-primary flex items-center gap-3',
